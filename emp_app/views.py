@@ -1,278 +1,104 @@
-# from datetime import datetime
-# from django.shortcuts import render, HttpResponse, redirect
-# from django.db.models import Q
-# from django.contrib.auth import authenticate, login, logout
-# from django.contrib import messages
-# from django.contrib.auth.decorators import login_required
-# from django.contrib.auth.forms import UserCreationForm
-# from .models import Employee, Department, Role
-
-
-# def register(request):
-#     if request.method == 'POST':
-#         form = UserCreationForm(request.POST)
-#         if form.is_valid():
-#             form.save()
-#             return redirect('login')
-#     else:
-#         form = UserCreationForm()
-#     return render(request, 'register.html', {'form': form})
-
-
-# def login_user(request):
-#     if request.method == "POST":
-#         username = request.POST.get('username')
-#         password = request.POST.get('password')
-#         user = authenticate(request, username=username, password=password)
-#         if user is not None:
-#             login(request, user)
-#             return redirect('index')
-#         else:
-#             messages.error(request, "Invalid username or password")
-#     return render(request, 'login.html')
-
-
-# def logout_user(request):
-#     logout(request)
-#     return redirect('login')
-
-
-# @login_required(login_url='/login/')
-# def index(request):
-#     return render(request, 'index.html')
-
-
-# @login_required(login_url='/login/')
-# def all_emp(request):
-#     emps = Employee.objects.filter(user=request.user)
-#     return render(request, 'all_emp.html', {'emps': emps})
-
-
-# @login_required(login_url='/login/')
-# def add_emp(request):
-#     if request.method == 'POST':
-#         try:
-#             first_name = request.POST['first_name']
-#             last_name = request.POST.get('last_name', '')
-#             salary = int(request.POST.get('salary', 0))
-#             bonus = int(request.POST.get('bonus', 0))
-#             phone = int(request.POST.get('phone', 0))
-#             dept_name = request.POST.get('dept')
-#             role_name = request.POST.get('role')
-
-#             # Parse hire_date from form
-#             hire_date_str = request.POST.get('hire_date', '')
-#             if hire_date_str:
-#                 hire_date = datetime.strptime(hire_date_str, '%Y-%m-%d').date()
-#             else:
-#                 hire_date = datetime.now().date()
-
-#             # Get or create department and role
-#             dept, _ = Department.objects.get_or_create(name=dept_name)
-#             role, _ = Role.objects.get_or_create(name=role_name)
-
-#             # Create employee
-#             new_emp = Employee(
-#                 user=request.user,
-#                 first_name=first_name,
-#                 last_name=last_name,
-#                 salary=salary,
-#                 bonus=bonus,
-#                 phone=phone,
-#                 dept=dept,
-#                 role=role,
-#                 hire_date=hire_date
-#             )
-#             new_emp.save()
-#             return HttpResponse("✅ Employee Added Successfully")
-
-#         except Exception as e:
-#             print("❌ Error adding employee:", e)
-#             return HttpResponse("❌ Error while adding employee")
-
-#     # GET request — show form
-#     departments = Department.objects.all()
-#     roles = Role.objects.all()
-#     return render(request, 'add_emp.html', {
-#         'departments': departments,
-#         'roles': roles
-#     })
-
-
-# @login_required(login_url='/login/')
-# def remove_emp(request, emp_id=0):
-#     if emp_id:
-#         try:
-#             emp = Employee.objects.get(id=emp_id, user=request.user)
-#             emp.delete()
-#             return HttpResponse("✅ Employee removed successfully")
-#         except Employee.DoesNotExist:
-#             return HttpResponse("❌ You can only remove your own employees")
-
-#     emps = Employee.objects.filter(user=request.user)
-#     return render(request, 'remove_emp.html', {'emps': emps})
-
-
-# @login_required(login_url='/login/')
-# def filter_emp(request):
-#     if request.method == 'POST':
-#         name = request.POST.get('name', '')
-#         dept = request.POST.get('dept', '')
-#         role = request.POST.get('role', '')
-
-#         emps = Employee.objects.filter(user=request.user)
-#         if name:
-#             emps = emps.filter(Q(first_name__icontains=name) | Q(last_name__icontains=name))
-#         if dept:
-#             emps = emps.filter(dept__name__icontains=dept)
-#         if role:
-#             emps = emps.filter(role__name__icontains=role)
-
-#         return render(request, 'all_emp.html', {'emps': emps})
-
-#     return render(request, 'filter_emp.html')
 from datetime import datetime
-import requests
-from django.shortcuts import render, HttpResponse, redirect
-from django.contrib.auth import authenticate, login, logout
+from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import UserCreationForm
-from django.conf import settings
 
+# ===================== In-Memory Data =====================
+EMPLOYEES = []
+EMPLOYEE_ID_COUNTER = 1  # To simulate auto-increment IDs
 
+DEPARTMENTS = [{"id": 1, "name": "HR"}, {"id": 2, "name": "IT"}, {"id": 3, "name": "Finance"}]
+ROLES = [{"id": 1, "name": "Manager"}, {"id": 2, "name": "Developer"}, {"id": 3, "name": "Analyst"}]
 
+# ===================== AUTHENTICATION =====================
 def register(request):
-    if request.method == 'POST':
-        form = UserCreationForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('login')
-    else:
-        form = UserCreationForm()
-    return render(request, 'register.html', {'form': form})
-
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+        # Simulate registration
+        messages.success(request, f"✅ User '{username}' registered (simulation).")
+        return redirect("login")
+    return render(request, "register.html")
 
 def login_user(request):
     if request.method == "POST":
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            login(request, user)
-            return redirect('index')
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+        if username and password:
+            request.session["user"] = username
+            messages.success(request, f"✅ Login successful. Welcome {username}!")
+            return redirect("index")
         else:
-            messages.error(request, "Invalid username or password")
-    return render(request, 'login.html')
-
+            messages.error(request, "❌ Invalid username or password.")
+    return render(request, "login.html")
 
 def logout_user(request):
-    logout(request)
-    return redirect('login')
+    request.session.flush()
+    messages.info(request, "You have been logged out.")
+    return redirect("login")
 
-
-@login_required(login_url='/login/')
+# ===================== DASHBOARD =====================
 def index(request):
-    return render(request, 'index.html')
+    if "user" not in request.session:
+        return redirect("login")
+    return render(request, "index.html")
 
-
-@login_required(login_url='/login/')
+# ===================== EMPLOYEE CRUD =====================
 def all_emp(request):
-    try:
-        url = request.build_absolute_uri('/api/employees/')
-        response = requests.get(url)
-        emps = response.json() if response.status_code == 200 else []
-    except Exception as e:
-        print("Error fetching employees via API:", e)
-        emps = []
-    return render(request, 'all_emp.html', {'emps': emps})
+    if "user" not in request.session:
+        return redirect("login")
+    return render(request, "all_emp.html", {"emps": EMPLOYEES})
 
-
-@login_required(login_url='/login/')
 def add_emp(request):
-    if request.method == 'POST':
-        try:
-            hire_date_str = request.POST.get('hire_date', '')
-            hire_date = datetime.strptime(hire_date_str, '%Y-%m-%d').date() if hire_date_str else datetime.now().date()
+    global EMPLOYEE_ID_COUNTER
+    if "user" not in request.session:
+        return redirect("login")
 
-            data = {
-                "user": request.user.id,
-                "first_name": request.POST.get('first_name'),
-                "last_name": request.POST.get('last_name', ''),
-                "salary": int(request.POST.get('salary', 0)),
-                "bonus": int(request.POST.get('bonus', 0)),
-                "phone": int(request.POST.get('phone', 0)),
-                "dept": request.POST.get('dept'),
-                "role": request.POST.get('role'),
-                "hire_date": hire_date.strftime('%Y-%m-%d'),
-            }
+    if request.method == "POST":
+        first_name = request.POST.get("first_name")
+        last_name = request.POST.get("last_name")
+        dept_id = int(request.POST.get("dept"))
+        role_id = int(request.POST.get("role"))
+        salary = float(request.POST.get("salary"))
+        bonus = float(request.POST.get("bonus") or 0)
+        phone = request.POST.get("phone")
+        hire_date_str = request.POST.get("hire_date")
+        hire_date = datetime.strptime(hire_date_str, "%Y-%m-%d").date() if hire_date_str else datetime.now().date()
 
-            url = request.build_absolute_uri('/api/employees/')
-            response = requests.post(url, json=data)
-            if response.status_code in [200, 201]:
-                return HttpResponse("✅ Employee Added Successfully")
-            else:
-                return HttpResponse(f"❌ Error adding employee via API: {response.text}")
-        except Exception as e:
-            return HttpResponse(f"❌ Exception: {str(e)}")
+        # Add employee to the in-memory list
+        EMPLOYEES.append({
+            "id": EMPLOYEE_ID_COUNTER,
+            "first_name": first_name,
+            "last_name": last_name,
+            "dept": next((d["name"] for d in DEPARTMENTS if d["id"] == dept_id), ""),
+            "role": next((r["name"] for r in ROLES if r["id"] == role_id), ""),
+            "salary": salary,
+            "bonus": bonus,
+            "phone": phone,
+            "hire_date": hire_date,
+        })
 
-    # GET request: fetch departments and roles from API
-    try:
-        dept_url = request.build_absolute_uri('/api/departments/')
-        role_url = request.build_absolute_uri('/api/roles/')
-        departments = requests.get(dept_url).json()
-        roles = requests.get(role_url).json()
-    except Exception as e:
-        print("Error fetching departments/roles via API:", e)
-        departments = []
-        roles = []
+        EMPLOYEE_ID_COUNTER += 1
+        messages.success(request, "✅ Employee added successfully.")
+        return redirect("all_emp")
 
-    return render(request, 'add_emp.html', {'departments': departments, 'roles': roles})
+    return render(request, "add_emp.html", {"departments": DEPARTMENTS, "roles": ROLES})
 
+def remove_emp(request, emp_id):
+    if "user" not in request.session:
+        return redirect("login")
 
-@login_required(login_url='/login/')
-def remove_emp(request, emp_id=0):
-    if emp_id:
-        try:
-            url = request.build_absolute_uri(f'/api/employees/{emp_id}/')
-            response = requests.delete(url)
-            if response.status_code in [200, 204]:
-                return HttpResponse("✅ Employee removed successfully")
-            else:
-                return HttpResponse(f"❌ Could not remove employee via API: {response.text}")
-        except Exception as e:
-            return HttpResponse(f"❌ Exception: {str(e)}")
+    global EMPLOYEES
+    EMPLOYEES = [emp for emp in EMPLOYEES if emp["id"] != emp_id]
+    messages.success(request, f"✅ Employee {emp_id} removed successfully.")
+    return redirect("all_emp")
 
-    # GET request — show all employees
-    try:
-        url = request.build_absolute_uri('/api/employees/')
-        response = requests.get(url)
-        emps = response.json() if response.status_code == 200 else []
-    except Exception as e:
-        print("Error fetching employees:", e)
-        emps = []
-
-    return render(request, 'remove_emp.html', {'emps': emps})
-
-
-@login_required(login_url='/login/')
 def filter_emp(request):
-    if request.method == 'POST':
-        try:
-            params = {}
-            if request.POST.get('name'):
-                params['search'] = request.POST.get('name')
-            if request.POST.get('dept'):
-                params['dept'] = request.POST.get('dept')
-            if request.POST.get('role'):
-                params['role'] = request.POST.get('role')
+    if "user" not in request.session:
+        return redirect("login")
 
-            url = request.build_absolute_uri('/api/employees/')
-            response = requests.get(url, params=params)
-            emps = response.json() if response.status_code == 200 else []
-            return render(request, 'all_emp.html', {'emps': emps})
-        except Exception as e:
-            print("Error filtering employees:", e)
-            return HttpResponse("❌ Error fetching filtered employees")
+    if request.method == "POST":
+        search_name = request.POST.get("name", "").lower()
+        filtered = [emp for emp in EMPLOYEES if search_name in emp["first_name"].lower() or search_name in emp["last_name"].lower()]
+        return render(request, "all_emp.html", {"emps": filtered})
 
-    return render(request, 'filter_emp.html') 
+    return render(request, "filter_emp.html")
