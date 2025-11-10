@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Add Employee | Office EMS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+  </head>
+  <body class="bg-light">
+    <div class="container py-5">
+      <div class="row justify-content-center">
+        <div class="col-md-6">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <h3 class="text-center mb-4">Add an Employee</h3>
+
+              <form action="/add_emp/" method="post">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                  <label for="first_name" class="form-label">First Name</label>
+                  <input type="text" class="form-control" id="first_name" name="first_name" 
+                         placeholder="Enter first name" required>
+                </div>
+
+                <div class="mb-3">
+                  <label for="last_name" class="form-label">Last Name</label>
+                  <input type="text" class="form-control" id="last_name" name="last_name" 
+                         placeholder="Enter last name">
+                </div>
+
+                <div class="mb-3">
+                  <label for="salary" class="form-label">Salary</label>
+                  <input type="number" class="form-control" id="salary" name="salary" 
+                         placeholder="Enter salary" required min="0">
+                </div>
+
+                <div class="mb-3">
+                  <label for="dept" class="form-label">Department</label>
+                  <select class="form-select" id="dept" name="dept" required>
+                    <option value="">-- Select Department --</option>
+                    {% for d in departments %}
+                      <option value="{{ d.name }}">{{ d.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <div class="mb-3">
+                  <label for="role" class="form-label">Role</label>
+                  <select class="form-select" id="role" name="role" required>
+                    <option value="">-- Select Role --</option>
+                    {% for r in roles %}
+                      <option value="{{ r.name }}">{{ r.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <div class="mb-3">
+                  <label for="bonus" class="form-label">Bonus</label>
+                  <input type="number" class="form-control" id="bonus" name="bonus" 
+                         placeholder="Enter bonus amount" min="0">
+                </div>
+
+                <div class="mb-3">
+                  <label for="phone" class="form-label">Phone</label>
+                  <input type="number" class="form-control" id="phone" name="phone" 
+                         placeholder="Enter phone number" required>
+                </div>
+
+                <div class="mb-3">
+                  <label for="hire_date" class="form-label">Hire Date</label>
+                  <input type="date" class="form-control" id="hire_date" name="hire_date">
+                </div>
+
+                <div class="d-grid">
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+              </form>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
