@@ -29,10 +29,22 @@ from django.contrib import admin
 #     path('admin/', admin.site.urls),
 #     path('', include('emp_app.urls')),  # Frontend app
 # ]
+# from django.contrib import admin
+# from django.urls import path, include
+
+# urlpatterns = [
+#     path('admin/', admin.site.urls),
+#     # path('api/', include('.urls')),
+#     path('api/', include('Emp_app.urls')),
+
+# ]
 from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('emp_app.urls')),  # no 'api/' prefix for frontend
+
+    path('', include('emp_app.urls')),     
+
+    path('api/', include('emp_app.urls')),  
 ]

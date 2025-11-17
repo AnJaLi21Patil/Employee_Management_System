@@ -1,34 +1,43 @@
 from datetime import datetime
+import requests
 from django.shortcuts import render, redirect
 from django.contrib import messages
 
-# ===================== In-Memory Data =====================
-EMPLOYEES = []
-EMPLOYEE_ID_COUNTER = 1  # To simulate auto-increment IDs
-
-DEPARTMENTS = [{"id": 1, "name": "HR"}, {"id": 2, "name": "IT"}, {"id": 3, "name": "Finance"}]
-ROLES = [{"id": 1, "name": "Manager"}, {"id": 2, "name": "Developer"}, {"id": 3, "name": "Analyst"}]
+API_BASE = "http://127.0.0.1:8000/api/"
+REGISTER_API = f"{API_BASE}register/"
+LOGIN_API = f"{API_BASE}login/"
+EMP_API = f"{API_BASE}employees/"
+DEPT_API = f"{API_BASE}departments/"
+ROLE_API = f"{API_BASE}roles/"
 
 # ===================== AUTHENTICATION =====================
 def register(request):
     if request.method == "POST":
-        username = request.POST.get("username")
-        password = request.POST.get("password")
-        # Simulate registration
-        messages.success(request, f"✅ User '{username}' registered (simulation).")
-        return redirect("login")
+        data = {"username": request.POST.get("username"), "password": request.POST.get("password")}
+        try:
+            response = requests.post(REGISTER_API, data=data)
+            if response.status_code == 201:
+                messages.success(request, "✅ Registration successful. Please login.")
+                return redirect("login")
+            else:
+                messages.error(request, response.json().get("error", "Registration failed"))
+        except Exception as e:
+            messages.error(request, f"API error: {e}")
     return render(request, "register.html")
 
 def login_user(request):
     if request.method == "POST":
-        username = request.POST.get("username")
-        password = request.POST.get("password")
-        if username and password:
-            request.session["user"] = username
-            messages.success(request, f"✅ Login successful. Welcome {username}!")
-            return redirect("index")
-        else:
-            messages.error(request, "❌ Invalid username or password.")
+        data = {"username": request.POST.get("username"), "password": request.POST.get("password")}
+        try:
+            response = requests.post(LOGIN_API, data=data)
+            if response.status_code == 200:
+                request.session["user"] = data["username"]
+                messages.success(request, f"✅ Login successful. Welcome {data['username']}!")
+                return redirect("index")
+            else:
+                messages.error(request, response.json().get("error", "Login failed"))
+        except Exception as e:
+            messages.error(request, f"API error: {e}")
     return render(request, "login.html")
 
 def logout_user(request):
@@ -46,59 +55,72 @@ def index(request):
 def all_emp(request):
     if "user" not in request.session:
         return redirect("login")
-    return render(request, "all_emp.html", {"emps": EMPLOYEES})
+    try:
+        response = requests.get(EMP_API)
+        emps = response.json() if response.status_code == 200 else []
+    except Exception as e:
+        messages.error(request, f"API error: {e}")
+        emps = []
+    return render(request, "all_emp.html", {"emps": emps})
 
 def add_emp(request):
-    global EMPLOYEE_ID_COUNTER
     if "user" not in request.session:
         return redirect("login")
 
+    try:
+        depts = requests.get(DEPT_API).json()
+        roles = requests.get(ROLE_API).json()
+    except Exception as e:
+        messages.error(request, f"API error: {e}")
+        depts, roles = [], []
+
     if request.method == "POST":
-        first_name = request.POST.get("first_name")
-        last_name = request.POST.get("last_name")
-        dept_id = int(request.POST.get("dept"))
-        role_id = int(request.POST.get("role"))
-        salary = float(request.POST.get("salary"))
-        bonus = float(request.POST.get("bonus") or 0)
-        phone = request.POST.get("phone")
-        hire_date_str = request.POST.get("hire_date")
-        hire_date = datetime.strptime(hire_date_str, "%Y-%m-%d").date() if hire_date_str else datetime.now().date()
-
-        # Add employee to the in-memory list
-        EMPLOYEES.append({
-            "id": EMPLOYEE_ID_COUNTER,
-            "first_name": first_name,
-            "last_name": last_name,
-            "dept": next((d["name"] for d in DEPARTMENTS if d["id"] == dept_id), ""),
-            "role": next((r["name"] for r in ROLES if r["id"] == role_id), ""),
-            "salary": salary,
-            "bonus": bonus,
-            "phone": phone,
+        hire_date = request.POST.get("hire_date") or datetime.now().date().isoformat()
+        data = {
+            "first_name": request.POST.get("first_name"),
+            "last_name": request.POST.get("last_name"),
+            "dept": request.POST.get("dept"),
+            "role": request.POST.get("role"),
+            "salary": request.POST.get("salary"),
+            "bonus": request.POST.get("bonus"),
+            "phone": request.POST.get("phone"),
             "hire_date": hire_date,
-        })
+        }
+        try:
+            response = requests.post(EMP_API, data=data)
+            if response.status_code in [200, 201]:
+                messages.success(request, "✅ Employee added successfully.")
+                return redirect("all_emp")
+            else:
+                messages.error(request, response.json().get("error", "Failed to add employee"))
+        except Exception as e:
+            messages.error(request, f"API error: {e}")
 
-        EMPLOYEE_ID_COUNTER += 1
-        messages.success(request, "✅ Employee added successfully.")
-        return redirect("all_emp")
-
-    return render(request, "add_emp.html", {"departments": DEPARTMENTS, "roles": ROLES})
+    return render(request, "add_emp.html", {"departments": depts, "roles": roles})
 
 def remove_emp(request, emp_id):
     if "user" not in request.session:
         return redirect("login")
-
-    global EMPLOYEES
-    EMPLOYEES = [emp for emp in EMPLOYEES if emp["id"] != emp_id]
-    messages.success(request, f"✅ Employee {emp_id} removed successfully.")
+    try:
+        response = requests.delete(f"{EMP_API}{emp_id}/")
+        if response.status_code in [200, 204]:
+            messages.success(request, f"✅ Employee {emp_id} removed successfully.")
+        else:
+            messages.error(request, "Failed to remove employee.")
+    except Exception as e:
+        messages.error(request, f"API error: {e}")
     return redirect("all_emp")
 
 def filter_emp(request):
     if "user" not in request.session:
         return redirect("login")
-
+    emps = []
     if request.method == "POST":
-        search_name = request.POST.get("name", "").lower()
-        filtered = [emp for emp in EMPLOYEES if search_name in emp["first_name"].lower() or search_name in emp["last_name"].lower()]
-        return render(request, "all_emp.html", {"emps": filtered})
-
-    return render(request, "filter_emp.html")
+        search = request.POST.get("name", "")
+        try:
+            response = requests.get(EMP_API, params={"search": search})
+            if response.status_code == 200:
+                emps = response.json()
+        except Exception as e:
+            messages.error(request, f"API error: {e}")
+    return render(request, "all_emp.html", {"emps": emps})
