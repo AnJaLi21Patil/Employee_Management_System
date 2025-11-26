@@ -27,17 +27,29 @@ def register(request):
 
 def login_user(request):
     if request.method == "POST":
-        data = {"username": request.POST.get("username"), "password": request.POST.get("password")}
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+        data = {"username": username, "password": password}
+
         try:
             response = requests.post(LOGIN_API, data=data)
             if response.status_code == 200:
-                request.session["user"] = data["username"]
-                messages.success(request, f"✅ Login successful. Welcome {data['username']}!")
-                return redirect("index")
+                tokens = response.json()  # { "access": "...", "refresh": "..." }
+
+                # Save username in session (optional)
+                request.session["user"] = username
+
+                # Render all_emp page and pass tokens
+                return render(request, "all_emp.html", {
+                    "accessToken": tokens.get("access"),
+                    "refreshToken": tokens.get("refresh"),
+                    "username": username
+                })
             else:
                 messages.error(request, response.json().get("error", "Login failed"))
         except Exception as e:
             messages.error(request, f"API error: {e}")
+
     return render(request, "login.html")
 
 def logout_user(request):
@@ -53,8 +65,6 @@ def index(request):
 
 # ===================== EMPLOYEE CRUD =====================
 def all_emp(request):
-    if "user" not in request.session:
-        return redirect("login")
     try:
         response = requests.get(EMP_API)
         emps = response.json() if response.status_code == 200 else []
