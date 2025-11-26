@@ -529,8 +529,22 @@ loadEmployees();
         <h5 class="modal-title">Scan to Download PDF</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body text-center p-5">
-        <img src="/api/all-employees-qr/" alt="QR Code" class="img-fluid" style="max-width: 320px;">
+      {% comment %} <div class="modal-body text-center p-5"> {% endcomment %}
+        {% comment %} <img src="/api/all-employees-qr/" alt="QR Code" class="img-fluid" style="max-width: 320px;"> {% endcomment %}
+        {% comment %} <img src="/api/all-employees-qr/" alt="QR Code"> {% endcomment %}
+{% comment %} <a href="/api/all-employees-pdf/" target="_blank">Download PDF</a> {% endcomment %}
+<div class="modal-body text-center p-5">
+    <!-- QR code image is clickable -->
+<a href="http://127.0.0.1:8000/api/all-employees-pdf/" target="_blank">
+    <img src="http://127.0.0.1:8000/api/all-employees-qr/" alt="QR Code">
+</a>
+    <br><br>
+    <!-- Direct PDF link as fallback -->
+    <a href="http://127.0.0.1:8000/api/all-employees-pdf/" target="_blank" class="btn btn-danger">
+        Download PDF
+    </a>
+</div>
+
       </div>
     </div>
   </div>

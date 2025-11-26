@@ -124,8 +124,9 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 
         if (res.ok) {
             // Save JWT tokens and username
-        localStorage.setItem("accessToken", data.access_token);
-        localStorage.setItem("refreshToken", data.refresh_token);
+            localStorage.setItem("accessToken", data.access);
+            localStorage.setItem("refreshToken", data.refresh);
+           // localStorage.setItem("username", data.username || username);
 
             alert("✅ Login successful!");
             // Redirect to add employee page
